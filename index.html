@@ -15,9 +15,9 @@
             --med-color: #e74c3c;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-        .container { max-width: 900px; margin: 0 auto; }
+        .container { max-width: 950px; margin: 0 auto; }
         
-        /* 首頁儀表板樣式 */
+        /* 首頁儀表板 */
         #dashboard-view { display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center; min-height: 80vh; }
         .dashboard-title { font-size: 2em; color: #34495e; margin-bottom: 20px; text-align: center; }
         .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; }
@@ -31,42 +31,45 @@
         .menu-card h2 { margin: 10px 0 0 0; font-size: 1.5em; }
         .menu-icon { font-size: 3em; margin-bottom: 10px; display: block; }
 
-        /* 特定卡片顏色 */
         .card-food { border-color: var(--food-color); }
         .card-item { border-color: var(--item-color); }
         .card-med { border-color: var(--med-color); }
 
-        /* 內容管理頁面樣式 (預設隱藏) */
-        #app-view { display: none; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; }
+        /* 管理頁面 */
+        #app-view { display: none; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
         
         .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
         .back-btn { background: #95a5a6; padding: 8px 15px; font-size: 0.9em; }
-        .back-btn:hover { background: #7f8c8d; }
-
-        /* 輸入與篩選區 */
+        
         .control-panel { background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
         .input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; flex: 1; }
         
-        button { cursor: pointer; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; color: white; transition: 0.2s; }
-        #addBtn { background: var(--primary); flex: 0 0 auto; }
-        #addBtn:hover { background: #357abd; }
+        /* 輸入框樣式優化 */
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; flex: 1; min-width: 100px; }
+        /* 讓數量欄位小一點 */
+        #inQty { flex: 0.4; min-width: 60px; } 
+        
+        button { cursor: pointer; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; color: white; transition: 0.2s; white-space: nowrap; }
+        #addBtn { background: var(--primary); }
         .del-btn { background: #e74c3c; padding: 5px 12px; font-size: 0.9em; }
 
-        /* 表格 */
-        table { width: 100%; border-collapse: collapse; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
-        th { background: var(--primary); color: white; }
+        th { background: var(--primary); color: white; white-space: nowrap; }
         
-        /* 狀態顏色 */
+        /* 狀態標籤 */
         .status-ok { color: #27ae60; font-weight: bold; }
         .status-soon { color: #f39c12; font-weight: bold; }
         .status-expired { color: #c0392b; font-weight: bold; }
+        
+        /* 地點標籤小樣式 */
+        .loc-badge { font-size: 0.85em; color: #666; background: #eee; padding: 2px 6px; border-radius: 4px; }
 
-        /* 手機優化 */
-        @media (max-width: 600px) {
+        @media (max-width: 768px) {
             .input-row { flex-direction: column; }
             button { width: 100%; }
+            /* 手機版隱藏非必要欄位以節省空間，這裡保留但縮小字體 */
+            th, td { padding: 8px 5px; font-size: 0.9em; }
         }
         
         #loading { text-align: center; color: #888; display: none; }
@@ -81,55 +84,60 @@
         <div class="card-grid">
             <div class="menu-card card-food" onclick="switchApp('food')">
                 <span class="menu-icon">🥦</span>
-                <h2>食物冰箱管理</h2>
-                <p>管理食材效期，減少浪費</p>
+                <h2>食物管理</h2>
+                <p>冰箱、櫥櫃、乾貨庫存</p>
             </div>
             <div class="menu-card card-item" onclick="switchApp('replace')">
                 <span class="menu-icon">🪥</span>
-                <h2>定期更換物品</h2>
-                <p>牙刷、濾心、電池更換提醒</p>
+                <h2>日用品補給</h2>
+                <p>衛生紙、清潔劑、濾心</p>
             </div>
             <div class="menu-card card-med" onclick="switchApp('med')">
                 <span class="menu-icon">💊</span>
                 <h2>藥物管理</h2>
-                <p>藥品庫存、過期日追蹤</p>
+                <p>常備藥、保健品效期</p>
             </div>
         </div>
     </div>
 
     <div id="app-view">
         <div class="header-row">
-            <button class="back-btn" onclick="goHome()">⬅ 返回首頁</button>
+            <button class="back-btn" onclick="goHome()">⬅ 返回</button>
             <h2 id="pageTitle" style="margin:0;">管理介面</h2>
         </div>
 
         <div class="control-panel">
             <div class="input-row">
-                <input type="text" id="inName" placeholder="物品名稱">
-                <select id="inCat"></select>
-                <input type="number" id="inQty" placeholder="數量" value="1" style="flex: 0.5;">
+                <select id="inLoc" title="存放地點"></select> 
+                <select id="inCat" title="分類"></select>
+            </div>
+            <div class="input-row">
+                <input type="text" id="inName" placeholder="物品名稱 (如: 醬油)">
+                <input type="number" id="inQty" placeholder="數量" value="1">
                 <input type="date" id="inDate">
                 <button id="addBtn">加入</button>
             </div>
             <div class="input-row">
-                 <input type="text" id="searchBox" placeholder="🔍 搜尋...">
+                 <input type="text" id="searchBox" placeholder="🔍 搜尋物品名稱...">
             </div>
         </div>
 
         <p id="loading">讀取資料中...</p>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>分類</th>
-                    <th>名稱</th>
-                    <th>數量</th>
-                    <th>狀態/期限</th>
-                    <th>操作</th>
-                </tr>
-            </thead>
-            <tbody id="listBody"></tbody>
-        </table>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>地點</th> <th>分類</th>
+                        <th>名稱</th>
+                        <th>數量</th>
+                        <th>狀態/期限</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="listBody"></tbody>
+            </table>
+        </div>
     </div>
 
 </div>
@@ -150,97 +158,92 @@ const firebaseConfig = {
   appId: "1:219743115164:web:88c78b9170bcc6ed07da59",
   measurementId: "G-047EBB1R3X"
 };
-
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // 全域變數
-    let currentCollectionName = ""; // 目前正在操作哪個資料庫集合
-    let unsubscribe = null; // 用來停止監聽資料庫
-    let localItems = []; // 本地暫存資料
+    let currentCollectionName = "";
+    let unsubscribe = null;
+    let localItems = [];
 
     // DOM 元素
     const dashboardView = document.getElementById('dashboard-view');
     const appView = document.getElementById('app-view');
     const pageTitle = document.getElementById('pageTitle');
     const inCat = document.getElementById('inCat');
+    const inLoc = document.getElementById('inLoc'); // 新增
     const listBody = document.getElementById('listBody');
     const searchBox = document.getElementById('searchBox');
     
-    // 設定不同模式的參數 (標題、資料庫名稱、分類選項)
+    // 設定不同模式的參數 (包含分類與地點)
     const appConfig = {
         food: {
-            title: "🥦 冰箱食物管理",
+            title: "🥦 食物管理",
             dbName: "foods",
-            categories: ["肉類/海鮮", "蔬菜/水果", "飲料/乳品", "醬料/其他"],
+            categories: ["肉類/海鮮", "蔬菜/水果", "飲料/乳品", "乾貨/醬料", "零食/其他"],
+            locations: ["冰箱冷藏", "冰箱冷凍", "廚房櫥櫃", "餐桌", "儲藏室"], // 食物專用地點
             themeColor: "#2ecc71"
         },
         replace: {
-            title: "🪥 定期更換物品",
+            title: "🪥 日用品補給",
             dbName: "replacements",
-            categories: ["浴室用品", "廚房耗材", "濾心/濾網", "電池/燈泡"],
+            categories: ["浴室用品", "廚房耗材", "清潔用品", "濾心/電池"],
+            locations: ["浴室櫃", "廚房水槽下", "陽台", "客廳櫃", "雜物間"], // 日用品地點
             themeColor: "#f1c40f"
         },
         med: {
             title: "💊 家庭藥箱管理",
             dbName: "medicines",
             categories: ["內服藥", "外用藥", "保健食品", "急救耗材"],
+            locations: ["醫藥箱", "冰箱(藥品)", "臥室床頭", "隨身包"], // 藥物地點
             themeColor: "#e74c3c"
         }
     };
 
-    // --- 1. 切換頁面邏輯 ---
     window.switchApp = (type) => {
         const config = appConfig[type];
         currentCollectionName = config.dbName;
 
-        // 1. 切換 UI
         dashboardView.style.display = 'none';
         appView.style.display = 'block';
         pageTitle.innerText = config.title;
         document.querySelector(':root').style.setProperty('--primary', config.themeColor);
 
-        // 2. 重新產生分類下拉選單
+        // 產生分類選單
         inCat.innerHTML = config.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+        // 產生地點選單 (新增)
+        inLoc.innerHTML = config.locations.map(l => `<option value="${l}">${l}</option>`).join('');
 
-        // 3. 重設輸入框日期為今天
         document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
-
-        // 4. 開始監聽資料庫
         loadData();
     };
 
     window.goHome = () => {
-        // 停止監聽上一頁的資料庫 (節省資源)
         if (unsubscribe) unsubscribe();
-        
         dashboardView.style.display = 'flex';
         appView.style.display = 'none';
-        document.querySelector(':root').style.setProperty('--primary', '#4a90e2'); // 回復預設藍色
+        document.querySelector(':root').style.setProperty('--primary', '#4a90e2');
     };
 
-    // --- 2. Firebase 資料操作 ---
     function loadData() {
         document.getElementById('loading').style.display = 'block';
         listBody.innerHTML = '';
         
         const q = query(collection(db, currentCollectionName), orderBy("date"));
         
-        // 即時監聽
         unsubscribe = onSnapshot(q, (snapshot) => {
             localItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             renderTable();
             document.getElementById('loading').style.display = 'none';
         }, (error) => {
             console.error(error);
-            alert("讀取錯誤，請檢查 Firebase Console");
         });
     }
 
-    // 新增資料
+    // 新增資料 (加入 loc 欄位)
     document.getElementById('addBtn').addEventListener('click', async () => {
         const name = document.getElementById('inName').value;
         const cat = inCat.value;
+        const loc = inLoc.value; // 取得地點
         const qty = document.getElementById('inQty').value;
         const date = document.getElementById('inDate').value;
 
@@ -251,49 +254,51 @@ const firebaseConfig = {
             btn.disabled = true; btn.innerText = "處理中...";
             
             await addDoc(collection(db, currentCollectionName), {
-                name, cat, qty, date, createdAt: new Date()
+                name, cat, loc, qty, date, createdAt: new Date()
             });
 
-            // 清空輸入
             document.getElementById('inName').value = '';
             document.getElementById('inQty').value = '1';
             btn.disabled = false; btn.innerText = "加入";
         } catch (e) {
             console.error(e);
             alert("新增失敗");
+            document.getElementById('addBtn').disabled = false;
         }
     });
 
-    // 刪除資料
     window.deleteItem = async (id) => {
-        if(confirm("確定要刪除/完成此項目嗎？")) {
+        if(confirm("確定要移除此項目嗎？")) {
             await deleteDoc(doc(db, currentCollectionName, id));
         }
     };
 
-    // --- 3. 渲染表格 ---
     function renderTable() {
         const searchText = searchBox.value.toLowerCase();
         
         const filtered = localItems.filter(item => 
-            (item.name || "").toLowerCase().includes(searchText)
+            (item.name || "").toLowerCase().includes(searchText) || 
+            (item.loc || "").toLowerCase().includes(searchText) // 也可以搜尋地點
         );
 
         listBody.innerHTML = filtered.map(item => {
             const status = getStatus(item.date);
+            // 處理舊資料沒有地點的情況
+            const itemLoc = item.loc ? item.loc : "未指定";
+            
             return `
                 <tr>
+                    <td><span class="loc-badge">${itemLoc}</span></td>
                     <td>${item.cat}</td>
                     <td>${item.name}</td>
                     <td>${item.qty}</td>
-                    <td class="${status.class}">${status.text} (${item.date})</td>
+                    <td class="${status.class}">${status.text} <br><small style="color:#999">(${item.date})</small></td>
                     <td><button class="del-btn" onclick="deleteItem('${item.id}')">移除</button></td>
                 </tr>
             `;
         }).join('');
     }
 
-    // 計算狀態 (通用邏輯)
     function getStatus(dateStr) {
         const today = new Date();
         today.setHours(0,0,0,0);
@@ -305,7 +310,6 @@ const firebaseConfig = {
         return { text: '良好', class: 'status-ok' };
     }
 
-    // 搜尋監聽
     searchBox.addEventListener('input', renderTable);
 
 </script>
