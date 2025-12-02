@@ -3,68 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>☁️ 雲端冰箱管家</title>
+    <title>🏠 智慧家庭庫存中樞</title>
     <style>
         :root {
             --primary: #4a90e2;
             --bg: #f5f7fa;
             --card: #ffffff;
             --text: #2c3e50;
+            --food-color: #2ecc71;
+            --item-color: #f1c40f;
+            --med-color: #e74c3c;
         }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
-        .container { max-width: 900px; margin: 0 auto; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { text-align: center; color: var(--primary); margin-top: 0; }
+        .container { max-width: 900px; margin: 0 auto; }
         
-        /* 控制區塊佈局 */
-        .control-panel {
-            display: grid;
-            gap: 15px;
-            background: #eef2f7;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .input-row, .filter-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        /* 輸入框樣式 */
-        input, select {
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            flex: 1; /* 自動填滿寬度 */
-        }
+        /* 首頁儀表板樣式 */
+        #dashboard-view { display: flex; flex-direction: column; gap: 20px; align-items: center; justify-content: center; min-height: 80vh; }
+        .dashboard-title { font-size: 2em; color: #34495e; margin-bottom: 20px; text-align: center; }
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; }
         
-        /* 按鈕 */
+        .menu-card {
+            background: white; padding: 30px; border-radius: 15px; cursor: pointer;
+            text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: transform 0.2s;
+            border-bottom: 5px solid #ccc;
+        }
+        .menu-card:hover { transform: translateY(-5px); }
+        .menu-card h2 { margin: 10px 0 0 0; font-size: 1.5em; }
+        .menu-icon { font-size: 3em; margin-bottom: 10px; display: block; }
+
+        /* 特定卡片顏色 */
+        .card-food { border-color: var(--food-color); }
+        .card-item { border-color: var(--item-color); }
+        .card-med { border-color: var(--med-color); }
+
+        /* 內容管理頁面樣式 (預設隱藏) */
+        #app-view { display: none; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: relative; }
+        
+        .header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .back-btn { background: #95a5a6; padding: 8px 15px; font-size: 0.9em; }
+        .back-btn:hover { background: #7f8c8d; }
+
+        /* 輸入與篩選區 */
+        .control-panel { background: #eef2f7; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .input-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+        input, select { padding: 10px; border: 1px solid #ccc; border-radius: 6px; flex: 1; }
+        
         button { cursor: pointer; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; color: white; transition: 0.2s; }
         #addBtn { background: var(--primary); flex: 0 0 auto; }
         #addBtn:hover { background: #357abd; }
         .del-btn { background: #e74c3c; padding: 5px 12px; font-size: 0.9em; }
-        
+
         /* 表格 */
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; }
         th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
         th { background: var(--primary); color: white; }
         
-        /* 分類標籤顏色 */
-        .tag { padding: 3px 8px; border-radius: 12px; font-size: 0.85em; background: #ddd; }
-        .tag-meat { background: #ffcccc; color: #a94442; }
-        .tag-veg { background: #dff0d8; color: #3c763d; }
-        .tag-drink { background: #d9edf7; color: #31708f; }
-        .tag-other { background: #fcf8e3; color: #8a6d3b; }
-
         /* 狀態顏色 */
         .status-ok { color: #27ae60; font-weight: bold; }
         .status-soon { color: #f39c12; font-weight: bold; }
         .status-expired { color: #c0392b; font-weight: bold; }
 
-        /* 手機版優化 */
+        /* 手機優化 */
         @media (max-width: 600px) {
-            .input-row, .filter-row { flex-direction: column; }
+            .input-row { flex-direction: column; }
             button { width: 100%; }
         }
         
@@ -74,172 +75,225 @@
 <body>
 
 <div class="container">
-    <h1>☁️ 雲端冰箱管家</h1>
 
-    <div class="control-panel">
-        <h3>➕ 新增物品</h3>
-        <div class="input-row">
-            <input type="text" id="inName" placeholder="名稱 (如: 雞蛋)">
-            <select id="inCat">
-                <option value="meat">🥩 肉類/海鮮</option>
-                <option value="veg">🥦 蔬菜/水果</option>
-                <option value="drink">🧃 飲料/乳品</option>
-                <option value="other">🥫 其他/醬料</option>
-            </select>
-            <input type="number" id="inQty" placeholder="數量" value="1" style="flex: 0.5;">
-            <input type="date" id="inDate">
-            <button id="addBtn">加入</button>
+    <div id="dashboard-view">
+        <h1 class="dashboard-title">🏠 智慧家庭庫存中樞</h1>
+        <div class="card-grid">
+            <div class="menu-card card-food" onclick="switchApp('food')">
+                <span class="menu-icon">🥦</span>
+                <h2>食物冰箱管理</h2>
+                <p>管理食材效期，減少浪費</p>
+            </div>
+            <div class="menu-card card-item" onclick="switchApp('replace')">
+                <span class="menu-icon">🪥</span>
+                <h2>定期更換物品</h2>
+                <p>牙刷、濾心、電池更換提醒</p>
+            </div>
+            <div class="menu-card card-med" onclick="switchApp('med')">
+                <span class="menu-icon">💊</span>
+                <h2>藥物管理</h2>
+                <p>藥品庫存、過期日追蹤</p>
+            </div>
         </div>
     </div>
 
-    <div class="control-panel" style="background: white; border: 1px solid #eee;">
-        <div class="filter-row">
-            <input type="text" id="searchBox" placeholder="🔍 搜尋冰箱內容...">
-            <select id="filterCat" style="flex: 0.5;">
-                <option value="all">全部種類</option>
-                <option value="meat">🥩 肉類/海鮮</option>
-                <option value="veg">🥦 蔬菜/水果</option>
-                <option value="drink">🧃 飲料/乳品</option>
-                <option value="other">🥫 其他/醬料</option>
-            </select>
+    <div id="app-view">
+        <div class="header-row">
+            <button class="back-btn" onclick="goHome()">⬅ 返回首頁</button>
+            <h2 id="pageTitle" style="margin:0;">管理介面</h2>
         </div>
+
+        <div class="control-panel">
+            <div class="input-row">
+                <input type="text" id="inName" placeholder="物品名稱">
+                <select id="inCat"></select>
+                <input type="number" id="inQty" placeholder="數量" value="1" style="flex: 0.5;">
+                <input type="date" id="inDate">
+                <button id="addBtn">加入</button>
+            </div>
+            <div class="input-row">
+                 <input type="text" id="searchBox" placeholder="🔍 搜尋...">
+            </div>
+        </div>
+
+        <p id="loading">讀取資料中...</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>分類</th>
+                    <th>名稱</th>
+                    <th>數量</th>
+                    <th>狀態/期限</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="listBody"></tbody>
+        </table>
     </div>
 
-    <p id="loading">正在連線至雲端資料庫...</p>
-
-    <table>
-        <thead>
-            <tr>
-                <th>分類</th>
-                <th>名稱</th>
-                <th>數量</th>
-                <th>狀態</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody id="listBody"></tbody>
-    </table>
 </div>
 
 <script type="module">
-    // 1. 引入必要的 Firebase 函式
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
     // ==========================================
-    // 2. 設定區：請將下方的 firebaseConfig 替換成你自己的！
+    // 設定區：請填入你的 Firebase Config
     // ==========================================
-    const firebaseConfig = {
-        apiKey: "AIzaSyCQnrmh80AWghQA8N1_vO8wLYfAEVUi90w",
-  	authDomain: "a101-91812.firebaseapp.com",
-  	projectId: "a101-91812",
-  	storageBucket: "a101-91812.firebasestorage.app",
-  	messagingSenderId: "219743115164",
-  	appId: "1:219743115164:web:88c78b9170bcc6ed07da59",
-  	measurementId: "G-047EBB1R3X"
-    };
-    // ==========================================
+const firebaseConfig = {
+  apiKey: "AIzaSyCQnrmh80AWghQA8N1_vO8wLYfAEVUi90w",
+  authDomain: "a101-91812.firebaseapp.com",
+  projectId: "a101-91812",
+  storageBucket: "a101-91812.firebasestorage.app",
+  messagingSenderId: "219743115164",
+  appId: "1:219743115164:web:88c78b9170bcc6ed07da59",
+  measurementId: "G-047EBB1R3X"
+};
 
-    // 初始化 Firebase
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const fridgeCol = collection(db, "fridge_items");
 
-    // UI 參考
+    // 全域變數
+    let currentCollectionName = ""; // 目前正在操作哪個資料庫集合
+    let unsubscribe = null; // 用來停止監聽資料庫
+    let localItems = []; // 本地暫存資料
+
+    // DOM 元素
+    const dashboardView = document.getElementById('dashboard-view');
+    const appView = document.getElementById('app-view');
+    const pageTitle = document.getElementById('pageTitle');
+    const inCat = document.getElementById('inCat');
     const listBody = document.getElementById('listBody');
     const searchBox = document.getElementById('searchBox');
-    const filterCat = document.getElementById('filterCat');
-    const loading = document.getElementById('loading');
-
-    // 本地暫存資料 (用於搜尋篩選)
-    let localItems = [];
-
-    // 設定預設日期為今天
-    document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
-
-    // --- 功能 1: 監聽雲端資料 (即時同步) ---
-    loading.style.display = 'block';
     
-    // 使用 onSnapshot 可以即時收到資料庫變更 (別人新增，你會馬上看到)
-    const q = query(fridgeCol, orderBy("date")); // 依照日期排序
-    
-    onSnapshot(q, (snapshot) => {
-        localItems = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-        }));
-        loading.style.display = 'none';
-        renderTable(); // 資料更新時重繪表格
-    }, (error) => {
-        console.error("讀取錯誤:", error);
-        loading.innerText = "讀取失敗，請檢查 Firebase 設定 (Console)";
-    });
+    // 設定不同模式的參數 (標題、資料庫名稱、分類選項)
+    const appConfig = {
+        food: {
+            title: "🥦 冰箱食物管理",
+            dbName: "foods",
+            categories: ["肉類/海鮮", "蔬菜/水果", "飲料/乳品", "醬料/其他"],
+            themeColor: "#2ecc71"
+        },
+        replace: {
+            title: "🪥 定期更換物品",
+            dbName: "replacements",
+            categories: ["浴室用品", "廚房耗材", "濾心/濾網", "電池/燈泡"],
+            themeColor: "#f1c40f"
+        },
+        med: {
+            title: "💊 家庭藥箱管理",
+            dbName: "medicines",
+            categories: ["內服藥", "外用藥", "保健食品", "急救耗材"],
+            themeColor: "#e74c3c"
+        }
+    };
 
-    // --- 功能 2: 新增資料 ---
+    // --- 1. 切換頁面邏輯 ---
+    window.switchApp = (type) => {
+        const config = appConfig[type];
+        currentCollectionName = config.dbName;
+
+        // 1. 切換 UI
+        dashboardView.style.display = 'none';
+        appView.style.display = 'block';
+        pageTitle.innerText = config.title;
+        document.querySelector(':root').style.setProperty('--primary', config.themeColor);
+
+        // 2. 重新產生分類下拉選單
+        inCat.innerHTML = config.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+
+        // 3. 重設輸入框日期為今天
+        document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
+
+        // 4. 開始監聽資料庫
+        loadData();
+    };
+
+    window.goHome = () => {
+        // 停止監聽上一頁的資料庫 (節省資源)
+        if (unsubscribe) unsubscribe();
+        
+        dashboardView.style.display = 'flex';
+        appView.style.display = 'none';
+        document.querySelector(':root').style.setProperty('--primary', '#4a90e2'); // 回復預設藍色
+    };
+
+    // --- 2. Firebase 資料操作 ---
+    function loadData() {
+        document.getElementById('loading').style.display = 'block';
+        listBody.innerHTML = '';
+        
+        const q = query(collection(db, currentCollectionName), orderBy("date"));
+        
+        // 即時監聽
+        unsubscribe = onSnapshot(q, (snapshot) => {
+            localItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            renderTable();
+            document.getElementById('loading').style.display = 'none';
+        }, (error) => {
+            console.error(error);
+            alert("讀取錯誤，請檢查 Firebase Console");
+        });
+    }
+
+    // 新增資料
     document.getElementById('addBtn').addEventListener('click', async () => {
         const name = document.getElementById('inName').value;
-        const cat = document.getElementById('inCat').value;
+        const cat = inCat.value;
         const qty = document.getElementById('inQty').value;
         const date = document.getElementById('inDate').value;
 
         if (!name || !date) { alert("請輸入名稱與日期"); return; }
 
         try {
-            document.getElementById('addBtn').disabled = true;
-            document.getElementById('addBtn').innerText = "儲存中...";
+            const btn = document.getElementById('addBtn');
+            btn.disabled = true; btn.innerText = "處理中...";
             
-            await addDoc(fridgeCol, {
-                name, cat, qty, date,
-                createdAt: new Date()
+            await addDoc(collection(db, currentCollectionName), {
+                name, cat, qty, date, createdAt: new Date()
             });
 
             // 清空輸入
             document.getElementById('inName').value = '';
             document.getElementById('inQty').value = '1';
-            document.getElementById('addBtn').disabled = false;
-            document.getElementById('addBtn').innerText = "加入";
+            btn.disabled = false; btn.innerText = "加入";
         } catch (e) {
-            console.error("新增失敗: ", e);
-            alert("新增失敗，請檢查 Console");
+            console.error(e);
+            alert("新增失敗");
         }
     });
 
-    // --- 功能 3: 刪除資料 (需掛載到 window 才能被 HTML onclick 呼叫) ---
+    // 刪除資料
     window.deleteItem = async (id) => {
-        if(confirm("確定吃掉或丟棄了嗎？")) {
-            await deleteDoc(doc(db, "fridge_items", id));
+        if(confirm("確定要刪除/完成此項目嗎？")) {
+            await deleteDoc(doc(db, currentCollectionName, id));
         }
     };
 
-    // --- 功能 4: 渲染表格 (含搜尋與篩選邏輯) ---
+    // --- 3. 渲染表格 ---
     function renderTable() {
         const searchText = searchBox.value.toLowerCase();
-        const catFilter = filterCat.value;
+        
+        const filtered = localItems.filter(item => 
+            (item.name || "").toLowerCase().includes(searchText)
+        );
 
-        // 篩選資料
-        const filtered = localItems.filter(item => {
-            const matchName = item.name.toLowerCase().includes(searchText);
-            const matchCat = catFilter === 'all' || item.cat === catFilter;
-            return matchName && matchCat;
-        });
-
-        // 產生 HTML
         listBody.innerHTML = filtered.map(item => {
             const status = getStatus(item.date);
-            const catLabel = getCatLabel(item.cat);
             return `
                 <tr>
-                    <td><span class="tag ${catLabel.class}">${catLabel.text}</span></td>
+                    <td>${item.cat}</td>
                     <td>${item.name}</td>
                     <td>${item.qty}</td>
                     <td class="${status.class}">${status.text} (${item.date})</td>
-                    <td><button class="del-btn" onclick="deleteItem('${item.id}')">完食</button></td>
+                    <td><button class="del-btn" onclick="deleteItem('${item.id}')">移除</button></td>
                 </tr>
             `;
         }).join('');
     }
 
-    // 輔助: 狀態計算
+    // 計算狀態 (通用邏輯)
     function getStatus(dateStr) {
         const today = new Date();
         today.setHours(0,0,0,0);
@@ -248,27 +302,13 @@
 
         if (diffDays < 0) return { text: `過期 ${Math.abs(diffDays)} 天`, class: 'status-expired' };
         if (diffDays <= 3) return { text: `剩 ${diffDays} 天`, class: 'status-soon' };
-        return { text: '新鮮', class: 'status-ok' };
+        return { text: '良好', class: 'status-ok' };
     }
 
-    // 輔助: 分類標籤
-    function getCatLabel(cat) {
-        const map = {
-            'meat': { text: '肉類', class: 'tag-meat' },
-            'veg':  { text: '蔬果', class: 'tag-veg' },
-            'drink':{ text: '飲品', class: 'tag-drink' },
-            'other':{ text: '其他', class: 'tag-other' }
-        };
-        return map[cat] || map['other'];
-    }
-
-    // --- 監聽搜尋框輸入事件 ---
+    // 搜尋監聽
     searchBox.addEventListener('input', renderTable);
-    filterCat.addEventListener('change', renderTable);
 
 </script>
 
 </body>
-
 </html>
-
