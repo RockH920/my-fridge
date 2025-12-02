@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>☁️ 雲端冰箱管家</title>
+    <style>
+        :root {
+            --primary: #4a90e2;
+            --bg: #f5f7fa;
+            --card: #ffffff;
+            --text: #2c3e50;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); padding: 20px; margin: 0; }
+        .container { max-width: 900px; margin: 0 auto; background: var(--card); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: var(--primary); margin-top: 0; }
+        
+        /* 控制區塊佈局 */
+        .control-panel {
+            display: grid;
+            gap: 15px;
+            background: #eef2f7;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .input-row, .filter-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* 輸入框樣式 */
+        input, select {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            flex: 1; /* 自動填滿寬度 */
+        }
+        
+        /* 按鈕 */
+        button { cursor: pointer; border: none; padding: 10px 20px; border-radius: 6px; font-weight: bold; color: white; transition: 0.2s; }
+        #addBtn { background: var(--primary); flex: 0 0 auto; }
+        #addBtn:hover { background: #357abd; }
+        .del-btn { background: #e74c3c; padding: 5px 12px; font-size: 0.9em; }
+        
+        /* 表格 */
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #eee; }
+        th { background: var(--primary); color: white; }
+        
+        /* 分類標籤顏色 */
+        .tag { padding: 3px 8px; border-radius: 12px; font-size: 0.85em; background: #ddd; }
+        .tag-meat { background: #ffcccc; color: #a94442; }
+        .tag-veg { background: #dff0d8; color: #3c763d; }
+        .tag-drink { background: #d9edf7; color: #31708f; }
+        .tag-other { background: #fcf8e3; color: #8a6d3b; }
+
+        /* 狀態顏色 */
+        .status-ok { color: #27ae60; font-weight: bold; }
+        .status-soon { color: #f39c12; font-weight: bold; }
+        .status-expired { color: #c0392b; font-weight: bold; }
+
+        /* 手機版優化 */
+        @media (max-width: 600px) {
+            .input-row, .filter-row { flex-direction: column; }
+            button { width: 100%; }
+        }
+        
+        #loading { text-align: center; color: #888; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>☁️ 雲端冰箱管家</h1>
+
+    <div class="control-panel">
+        <h3>➕ 新增物品</h3>
+        <div class="input-row">
+            <input type="text" id="inName" placeholder="名稱 (如: 雞蛋)">
+            <select id="inCat">
+                <option value="meat">🥩 肉類/海鮮</option>
+                <option value="veg">🥦 蔬菜/水果</option>
+                <option value="drink">🧃 飲料/乳品</option>
+                <option value="other">🥫 其他/醬料</option>
+            </select>
+            <input type="number" id="inQty" placeholder="數量" value="1" style="flex: 0.5;">
+            <input type="date" id="inDate">
+            <button id="addBtn">加入</button>
+        </div>
+    </div>
+
+    <div class="control-panel" style="background: white; border: 1px solid #eee;">
+        <div class="filter-row">
+            <input type="text" id="searchBox" placeholder="🔍 搜尋冰箱內容...">
+            <select id="filterCat" style="flex: 0.5;">
+                <option value="all">全部種類</option>
+                <option value="meat">🥩 肉類/海鮮</option>
+                <option value="veg">🥦 蔬菜/水果</option>
+                <option value="drink">🧃 飲料/乳品</option>
+                <option value="other">🥫 其他/醬料</option>
+            </select>
+        </div>
+    </div>
+
+    <p id="loading">正在連線至雲端資料庫...</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>分類</th>
+                <th>名稱</th>
+                <th>數量</th>
+                <th>狀態</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody id="listBody"></tbody>
+    </table>
+</div>
+
+<script type="module">
+    // 1. 引入必要的 Firebase 函式
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // ==========================================
+    // 2. 設定區：請將下方的 firebaseConfig 替換成你自己的！
+    // ==========================================
+    const firebaseConfig = {
+        apiKey: "AIzaSyCQnrmh80AWghQA8N1_vO8wLYfAEVUi90w",
+  	authDomain: "a101-91812.firebaseapp.com",
+  	projectId: "a101-91812",
+  	storageBucket: "a101-91812.firebasestorage.app",
+  	messagingSenderId: "219743115164",
+  	appId: "1:219743115164:web:88c78b9170bcc6ed07da59",
+  	measurementId: "G-047EBB1R3X"
+    };
+    // ==========================================
+
+    // 初始化 Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const fridgeCol = collection(db, "fridge_items");
+
+    // UI 參考
+    const listBody = document.getElementById('listBody');
+    const searchBox = document.getElementById('searchBox');
+    const filterCat = document.getElementById('filterCat');
+    const loading = document.getElementById('loading');
+
+    // 本地暫存資料 (用於搜尋篩選)
+    let localItems = [];
+
+    // 設定預設日期為今天
+    document.getElementById('inDate').value = new Date().toISOString().split('T')[0];
+
+    // --- 功能 1: 監聽雲端資料 (即時同步) ---
+    loading.style.display = 'block';
+    
+    // 使用 onSnapshot 可以即時收到資料庫變更 (別人新增，你會馬上看到)
+    const q = query(fridgeCol, orderBy("date")); // 依照日期排序
+    
+    onSnapshot(q, (snapshot) => {
+        localItems = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        loading.style.display = 'none';
+        renderTable(); // 資料更新時重繪表格
+    }, (error) => {
+        console.error("讀取錯誤:", error);
+        loading.innerText = "讀取失敗，請檢查 Firebase 設定 (Console)";
+    });
+
+    // --- 功能 2: 新增資料 ---
+    document.getElementById('addBtn').addEventListener('click', async () => {
+        const name = document.getElementById('inName').value;
+        const cat = document.getElementById('inCat').value;
+        const qty = document.getElementById('inQty').value;
+        const date = document.getElementById('inDate').value;
+
+        if (!name || !date) { alert("請輸入名稱與日期"); return; }
+
+        try {
+            document.getElementById('addBtn').disabled = true;
+            document.getElementById('addBtn').innerText = "儲存中...";
+            
+            await addDoc(fridgeCol, {
+                name, cat, qty, date,
+                createdAt: new Date()
+            });
+
+            // 清空輸入
+            document.getElementById('inName').value = '';
+            document.getElementById('inQty').value = '1';
+            document.getElementById('addBtn').disabled = false;
+            document.getElementById('addBtn').innerText = "加入";
+        } catch (e) {
+            console.error("新增失敗: ", e);
+            alert("新增失敗，請檢查 Console");
+        }
+    });
+
+    // --- 功能 3: 刪除資料 (需掛載到 window 才能被 HTML onclick 呼叫) ---
+    window.deleteItem = async (id) => {
+        if(confirm("確定吃掉或丟棄了嗎？")) {
+            await deleteDoc(doc(db, "fridge_items", id));
+        }
+    };
+
+    // --- 功能 4: 渲染表格 (含搜尋與篩選邏輯) ---
+    function renderTable() {
+        const searchText = searchBox.value.toLowerCase();
+        const catFilter = filterCat.value;
+
+        // 篩選資料
+        const filtered = localItems.filter(item => {
+            const matchName = item.name.toLowerCase().includes(searchText);
+            const matchCat = catFilter === 'all' || item.cat === catFilter;
+            return matchName && matchCat;
+        });
+
+        // 產生 HTML
+        listBody.innerHTML = filtered.map(item => {
+            const status = getStatus(item.date);
+            const catLabel = getCatLabel(item.cat);
+            return `
+                <tr>
+                    <td><span class="tag ${catLabel.class}">${catLabel.text}</span></td>
+                    <td>${item.name}</td>
+                    <td>${item.qty}</td>
+                    <td class="${status.class}">${item.text} (${item.date})</td>
+                    <td><button class="del-btn" onclick="deleteItem('${item.id}')">完食</button></td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    // 輔助: 狀態計算
+    function getStatus(dateStr) {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const target = new Date(dateStr);
+        const diffDays = Math.ceil((target - today) / (86400000));
+
+        if (diffDays < 0) return { text: `過期 ${Math.abs(diffDays)} 天`, class: 'status-expired' };
+        if (diffDays <= 3) return { text: `剩 ${diffDays} 天`, class: 'status-soon' };
+        return { text: '新鮮', class: 'status-ok' };
+    }
+
+    // 輔助: 分類標籤
+    function getCatLabel(cat) {
+        const map = {
+            'meat': { text: '肉類', class: 'tag-meat' },
+            'veg':  { text: '蔬果', class: 'tag-veg' },
+            'drink':{ text: '飲品', class: 'tag-drink' },
+            'other':{ text: '其他', class: 'tag-other' }
+        };
+        return map[cat] || map['other'];
+    }
+
+    // --- 監聽搜尋框輸入事件 ---
+    searchBox.addEventListener('input', renderTable);
+    filterCat.addEventListener('change', renderTable);
+
+</script>
+
+</body>
+</html>
